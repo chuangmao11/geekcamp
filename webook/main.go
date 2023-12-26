@@ -6,10 +6,13 @@ import (
 	"geekcamp/webook/internal/service"
 	"geekcamp/webook/internal/web"
 	"geekcamp/webook/internal/web/middleware"
+	"geekcamp/webook/pkg/ginx/middlewares/ratelimit"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
-	"github.com/gin-contrib/sessions/redis"
+	"github.com/gin-contrib/sessions/memstore"
+
 	"github.com/gin-gonic/gin"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"strings"
@@ -26,6 +29,11 @@ func main() {
 
 func initWebServer() *gin.Engine {
 	server := gin.Default()
+
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: "localhost:6379",
+	})
+	server.Use(ratelimit.NewBuilder(redisClient, time.Second, 1000).Build())
 	server.Use(cors.New(cors.Config{
 		AllowHeaders:     []string{"Content-Type", "Authorization"},
 		AllowCredentials: true,
@@ -42,14 +50,15 @@ func initWebServer() *gin.Engine {
 	//store := cookie.NewStore([]byte("secret"))
 	/*store := memstore.NewStore([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"),
 	[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))*/
-	store, err := redis.NewStore(16, "tcp", "localhost:6379", "",
-		[]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"),
-		[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
-	if err != nil {
-		panic(err)
-	}
+	//store, err := redis.NewStore(16, "tcp", "localhost:6379", "",
+	//	[]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"),
+	//	[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
+	//if err != nil {
+	//	panic(err)
+	//}
 	//store := &sqlx_store.Store{}
-
+	store := memstore.NewStore([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"),
+		[]byte("0Pf2r0wZBpXVXlQNdpwCXN4ncnlnZSc3"))
 	server.Use(sessions.Sessions("mysession", store))
 	server.Use(middleware.NewLoginMiddlewareBuilder().
 		IgnorePaths("/users/signup").

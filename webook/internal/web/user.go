@@ -1,12 +1,15 @@
 package web
 
 import (
+	"fmt"
 	"geekcamp/webook/internal/domain"
 	"geekcamp/webook/internal/service"
 	regexp "github.com/dlclark/regexp2"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
+	jwt "github.com/golang-jwt/jwt/v5"
 	"net/http"
+	"time"
 )
 
 type UserHandler struct {
@@ -106,9 +109,62 @@ func (u *UserHandler) Login(ctx *gin.Context) {
 		return
 	}
 	sess := sessions.Default(ctx)
-	sess.Save()
 	sess.Set("userId", user.Id)
+	sess.Options(sessions.Options{
+		Secure:   true,
+		HttpOnly: true,
+		MaxAge:   30 * 60,
+	})
+	sess.Save()
 	ctx.String(http.StatusOK, "登录成功")
+}
+
+func (u *UserHandler) LoginJWT(ctx *gin.Context) {
+	type LoginReq struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	var req LoginReq
+	if err := ctx.Bind(&req); err != nil {
+		ctx.String(http.StatusOK, "系统异常")
+		return
+	}
+	user, err := u.svc.Login(ctx, req.Email, req.Password)
+	if err == service.ErrInvalidUserOrPassword {
+		ctx.String(http.StatusOK, "账号密码错误")
+		return
+	}
+	if err != nil {
+		ctx.String(http.StatusOK, "系统异常")
+		return
+	}
+	//token := jwt.New(jwt.SigningMethodHS512)
+	claims := UserClaims{
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Minute)),
+		},
+		Uid:       user.Id,
+		UserAgent: ctx.Request.UserAgent(),
+	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS512, claims)
+	tokenStr, err := token.SignedString([]byte("95osj3fUD7fo0mlYdDbncXz4VD2igvf0"))
+	if err != nil {
+		ctx.String(http.StatusInternalServerError, "系统错误")
+		return
+	}
+	ctx.Header("x-jwt-token", tokenStr)
+	fmt.Println(user)
+	ctx.String(http.StatusOK, "登录成功")
+	return
+}
+
+func (u *UserHandler) Logout(ctx *gin.Context) {
+	sess := sessions.Default(ctx)
+	sess.Options(sessions.Options{
+		MaxAge: -1,
+	})
+	sess.Save()
+	ctx.String(http.StatusOK, "退出登录成功")
 }
 
 func (u *UserHandler) Edit(ctx *gin.Context) {
@@ -149,4 +205,44 @@ func (u *UserHandler) Profile(ctx *gin.Context) {
 		return
 	}
 	ctx.JSON(http.StatusOK, userinfo)
+}
+
+func (u *UserHandler) ProfileJWT(c *gin.Context) {
+	//// 取得拿到userID
+	//sess := sessions.Default(c)
+	//id := sess.Get("userId").(int64)
+
+	cla, ok := c.Get("claims")
+	if !ok {
+		// 假设 这里没有拿到 claims， 怎么办？
+		c.String(http.StatusOK, "系统错误")
+		return
+	}
+	// ok 代表是不是 *UserClaims
+	claims, ok := cla.(*UserClaims)
+	if !ok {
+		// 监控这里
+		c.String(http.StatusOK, "系统错误")
+		return
+	}
+
+	userinfo, err := u.svc.Profile(c, domain.User{
+		Id: claims.Uid,
+	})
+
+	fmt.Println(claims.Uid)
+
+	if err != nil {
+		c.String(http.StatusOK, "系统错误, 用户信息404")
+		return
+	}
+
+	c.JSON(http.StatusOK, userinfo)
+}
+
+type UserClaims struct {
+	jwt.RegisteredClaims
+	//声明自己需要放进token中的数据
+	Uid       int64
+	UserAgent string
 }
