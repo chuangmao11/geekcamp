@@ -10,6 +10,7 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
@@ -20,10 +21,15 @@ import (
 )
 
 func main() {
-	server := initWebServer()
-	db := initDB()
-	u := initUser(db)
-	u.RegisterRoutes(server)
+	//server := initWebServer()
+	//db := initDB()
+	//u := initUser(db)
+	//u.RegisterRoutes(server)
+	server := gin.Default()
+	server.GET("/hello", func(ctx *gin.Context) {
+		ctx.String(http.StatusOK, "你好，你来了")
+
+	})
 	server.Run(":8080")
 }
 

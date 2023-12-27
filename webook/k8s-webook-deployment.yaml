@@ -2,23 +2,23 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: webook
-#  specification
+  labels:
+    app: webook
 spec:
-  #  副本数量
   replicas: 3
   selector:
     matchLabels:
       app: webook
-  #      template 描述的是你的 POD 是什么样的
   template:
     metadata:
+      name: webook
       labels:
         app: webook
-    #    POD 的具体信息
     spec:
       containers:
         - name: webook
-          image: flycash/webook:v0.0.1
+          image: chuangmao11/webook:v0.0.1
           ports:
             - containerPort: 8080
-
+      restartPolicy: Always
+      
