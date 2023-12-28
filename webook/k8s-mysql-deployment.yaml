@@ -24,5 +24,8 @@ spec:
             - name: MYSQL_ROOT_PASSWORD
               value: root
           imagePullPolicy: IfNotPresent
+          volumeMounts:
+            - mountPath: /mysql
+              name: mysql-storage
       restartPolicy: Always
       
