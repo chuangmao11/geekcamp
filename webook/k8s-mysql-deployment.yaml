@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: webook-mysql
+
   labels:
     app: webook-mysql
 spec:
@@ -14,10 +15,14 @@ spec:
       name: webook-mysql
       labels:
         app: webook-mysql
+
     spec:
       containers:
         - name: webook-mysql
-          image: Image
+          image: mysql:latest
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
           imagePullPolicy: IfNotPresent
       restartPolicy: Always
       

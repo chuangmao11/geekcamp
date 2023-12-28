@@ -4,10 +4,12 @@ metadata:
   name: webook-mysql
 spec:
   selector:
-    app: webook-mysql
+    app: mysql
   ports:
     - protocol: TCP
-      port: 80
-      targetPort: 8080
+      port: 14306
+      targetPort: 3306
   type: LoadBalancer
+
+
   
