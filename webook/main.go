@@ -1,6 +1,7 @@
 package main
 
 import (
+	"geekcamp/webook/config"
 	"geekcamp/webook/internal/repository"
 	dao2 "geekcamp/webook/internal/repository/dao"
 	"geekcamp/webook/internal/service"
@@ -10,8 +11,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/memstore"
-	"net/http"
-
 	"github.com/gin-gonic/gin"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
@@ -21,23 +20,23 @@ import (
 )
 
 func main() {
-	//server := initWebServer()
-	//db := initDB()
-	//u := initUser(db)
-	//u.RegisterRoutes(server)
-	server := gin.Default()
-	server.GET("/hello", func(ctx *gin.Context) {
-		ctx.String(http.StatusOK, "你好，你来了")
-
-	})
-	server.Run(":8080")
+	server := initWebServer()
+	db := initDB()
+	u := initUser(db)
+	u.RegisterRoutes(server)
+	//server := gin.Default()
+	//server.GET("/hello", func(ctx *gin.Context) {
+	//	ctx.String(http.StatusOK, "你好，你来了")
+	//
+	//})
+	//server.Run(":8080")
 }
 
 func initWebServer() *gin.Engine {
 	server := gin.Default()
 
 	redisClient := redis.NewClient(&redis.Options{
-		Addr: "localhost:6379",
+		Addr: config.Config.Redis.Addr,
 	})
 	server.Use(ratelimit.NewBuilder(redisClient, time.Second, 1000).Build())
 	server.Use(cors.New(cors.Config{
@@ -81,7 +80,7 @@ func initUser(db *gorm.DB) *web.UserHandler {
 }
 
 func initDB() *gorm.DB {
-	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:13316)/webook"))
+	db, err := gorm.Open(mysql.Open(config.Config.DB.DSN))
 	if err != nil {
 		panic(err)
 	}

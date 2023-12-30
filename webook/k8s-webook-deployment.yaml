@@ -1,24 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: mysql-deployment
+  name: webook-live
+#  specification
 spec:
-  replicas: 1
+  #  副本数量
+  replicas: 3
   selector:
     matchLabels:
-      app: mysql
+      app: webook-live
+  #      template 描述的是你的 POD 是什么样的
   template:
     metadata:
       labels:
-        app: mysql
+        app: webook-live
+    #    POD 的具体信息
     spec:
       containers:
-        - name: mysql
-          image: mysql:8.0
-          env:
-            - name: MYSQL_ROOT_PASSWORD
-              value: root
+        - name: webook
+          image: flycash/webook-live:v0.0.1
           ports:
-            - containerPort: 3306
+            - containerPort: 8080
 
       
