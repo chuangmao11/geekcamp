@@ -8,8 +8,9 @@ spec:
   ports:
     - protocol: TCP
       #      你访问的端口
-      port: 11309
+      port: 3308
       targetPort: 3306
+
   type: LoadBalancer
 
 

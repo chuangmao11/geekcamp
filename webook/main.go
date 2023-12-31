@@ -29,7 +29,7 @@ func main() {
 	//	ctx.String(http.StatusOK, "你好，你来了")
 	//
 	//})
-	//server.Run(":8080")
+	server.Run(":8081")
 }
 
 func initWebServer() *gin.Engine {
@@ -80,7 +80,7 @@ func initUser(db *gorm.DB) *web.UserHandler {
 }
 
 func initDB() *gorm.DB {
-	db, err := gorm.Open(mysql.Open(config.Config.DB.DSN))
+	db, err := gorm.Open(mysql.Open("root:root@tcp(localhost:3308)/webook"))
 	if err != nil {
 		panic(err)
 	}
